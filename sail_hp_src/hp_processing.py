@@ -2,6 +2,7 @@
 
 import pyart
 import numpy as np
+import sys
 from datetime import datetime
 import subprocess
 import logging
@@ -87,9 +88,19 @@ def grid_radar(radar, config):
 
 def subset_lowest_level(ds, config):
     hp_fields = [v for v in ds.variables if "hp" in v] + config["additional_fields"]
-    ds["height_expanded"] = (ds.z * (ds[hp_fields[0]]/ds[hp_fields[0]])).fillna(5000)
+    
+    # Use corrected_reflectivity as mask, fillna with value ABOVE grid max (10km)
+    ds["height_expanded"] = (ds.z * (ds.corrected_reflectivity/ds.corrected_reflectivity)).fillna(10_000)
     min_index = ds.height_expanded.argmin(dim='z', skipna=True)
-    return ds[hp_fields].isel(z=min_index)
+    
+    # Create lowest_height variable from height_expanded at minimum index
+    ds["lowest_height"] = ds.height_expanded.isel(z=min_index)
+    
+    # Subset all fields at the lowest vertical level and include lowest_height
+    subset_ds = ds[hp_fields].isel(z=min_index)
+    subset_ds["lowest_height"] = ds["lowest_height"]
+    
+    return subset_ds
 
 def update_metadata(ds, config):
     ds.attrs['field_names'] = ', '.join(ds.data_vars.keys())
