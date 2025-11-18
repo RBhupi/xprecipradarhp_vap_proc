@@ -89,16 +89,17 @@ def grid_radar(radar, config):
 def subset_lowest_level(ds, config):
     hp_fields = [v for v in ds.variables if "hp" in v] + config["additional_fields"]
     
-    # Use corrected_reflectivity as mask, fillna with value ABOVE grid max (10km)
+    # Create temporary height field masked by reflectivity, fillna with 10km (above grid)
     ds["height_expanded"] = (ds.z * (ds.corrected_reflectivity/ds.corrected_reflectivity)).fillna(10_000)
+    
+    # Find the lowest valid level for each x,y pixel (2D index array)
     min_index = ds.height_expanded.argmin(dim='z', skipna=True)
     
-    # Create lowest_height variable from height_expanded at minimum index
-    ds["lowest_height"] = ds.height_expanded.isel(z=min_index)
-    
-    # Subset all fields at the lowest vertical level and include lowest_height
+    # Subset all hp fields and reflectivity at the lowest valid level
     subset_ds = ds[hp_fields].isel(z=min_index)
-    subset_ds["lowest_height"] = ds["lowest_height"]
+    
+    # Add the actual height values at those lowest levels as a new variable
+    subset_ds["lowest_height"] = ds.height_expanded.isel(z=min_index)
     
     return subset_ds
 
