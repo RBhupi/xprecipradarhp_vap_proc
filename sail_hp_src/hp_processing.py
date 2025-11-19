@@ -126,10 +126,23 @@ def make_squire_grid(radar, config):
 
 def process_file(file, config, season):
     radar = read_radar(file)
-    for scheme in ['summer', 'winter', 'pyart']:
-        field = config["classification_fields"][scheme]["field_name"]
-        desc = config["classification_fields"][scheme]["long_name"]
-        method = globals()[config["classification_fields"][scheme]["function"]]
-        add_classification_field(method(radar), radar, field, desc, config)
+    
+    # Run CSU classification based on season
+    if season == "summer":
+        field = config["classification_fields"]["summer"]["field_name"]
+        desc = config["classification_fields"]["summer"]["long_name"]
+        add_classification_field(classify_summer(radar), radar, field, desc, config)
+    elif season == "winter":
+        field = config["classification_fields"]["winter"]["field_name"]
+        desc = config["classification_fields"]["winter"]["long_name"]
+        add_classification_field(classify_winter(radar), radar, field, desc, config)
+    else:
+        raise ValueError(f"Invalid season: {season}. Must be 'summer' or 'winter'.")
+    
+    # Always run PyART classification
+    field = config["classification_fields"]["pyart"]["field_name"]
+    desc = config["classification_fields"]["pyart"]["long_name"]
+    add_classification_field(classify_pyart(radar), radar, field, desc, config)
+    
     radar = filter_fields(radar, config)
     return make_squire_grid(radar, config)
