@@ -1,7 +1,7 @@
 CONFIG = {
     # File patterns
     'input_file_pattern': 'gucxprecipradarcmacppiS2.c1',
-    'output_file_pattern': 'gucxprecipradarcmacppihpS2.c1',
+    'output_file_pattern': 'gucxprecipradarhpS2.c1',
 
     # Fill value matching DOD (_FillValue = -9999)
     'fill_value': -9999,
