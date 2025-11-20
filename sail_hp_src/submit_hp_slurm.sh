@@ -10,6 +10,11 @@ BASE_OUT="/gpfs/wolf2/arm/atm124/proj-shared/HydroPhase202511_test"
 DOD="/ccsopen/home/braut/projects/xprecipradarhp_vap_proc/sail_hp_src/dod_v1-3.txt"
 ENV_PATH="/autofs/nccsopen-svm1_home/braut/data-env1"
 
+# Create log directory with timestamp
+LOG_DIR="logs_$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$LOG_DIR"
+echo "Logs will be saved to: $LOG_DIR"
+
 MONTHS=(
     202111 202112
     202201 202202 202203 202204 202205 202206
@@ -44,8 +49,8 @@ for ym in "${MONTHS[@]}"; do
 #!/bin/bash
 #SBATCH --job-name=hp_${ym}
 #SBATCH --account=atm124
-#SBATCH --output=hp_${ym}.out
-#SBATCH --error=hp_${ym}.err
+#SBATCH --output=${LOG_DIR}/hp_${ym}.out
+#SBATCH --error=${LOG_DIR}/hp_${ym}.err
 #SBATCH --partition=batch_all
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -53,7 +58,8 @@ for ym in "${MONTHS[@]}"; do
 #SBATCH --mem=40G
 #SBATCH --time=12:00:00
 
-source ${ENV_PATH}/bin/activate
+eval "\$(micromamba shell hook --shell bash)"
+micromamba activate ${ENV_PATH}
 
 python $PY_SCRIPT $year $month \
     --season $season \
